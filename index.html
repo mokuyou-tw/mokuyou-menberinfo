@@ -27,6 +27,7 @@
             color: var(--color-slate-900);
             line-height: 1.6;
             padding: 20px;
+            font-size: 16px;
         }
 
         .container {
@@ -113,12 +114,36 @@
             background: rgba(var(--color-brown-600-rgb), 0.05);
             border: 1px solid rgba(var(--color-brown-600-rgb), 0.15);
             border-radius: 12px;
-            padding: 20px;
-            font-size: 14px;
-            line-height: 1.8;
+            padding: 24px;
+            font-size: 16px;
+            line-height: 1.9;
             color: var(--color-slate-900);
             white-space: pre-wrap;
             word-wrap: break-word;
+        }
+
+        /* 品牌特色字體放大 */
+        .brand-highlight-title {
+            font-size: 22px;
+            font-weight: 700;
+            margin-top: 8px;
+            margin-bottom: 4px;
+        }
+
+        .brand-highlight-block {
+            font-size: 18px;
+        }
+
+        .slogan {
+            display: inline-block;
+            margin-bottom: 16px;
+            padding: 10px 18px;
+            border-radius: 999px;
+            background: linear-gradient(90deg, #21808d, #1d7480);
+            color: #ffffff;
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 1px;
         }
 
         .highlight {
@@ -170,6 +195,10 @@
                 font-size: 16px;
                 padding: 14px 32px;
             }
+
+            .slogan {
+                font-size: 16px;
+            }
         }
     </style>
 </head>
@@ -183,6 +212,8 @@
                 <div class="brand-name">木曜漾 mokuyou</div>
             </div>
             <div class="brand-subtitle">台中市西屯區文華路1-8號（逢甲商圈）</div>
+            <div class="slogan">週四木曜漾 點數雙倍拿五折優惠</div>
+            <br>
             <button class="copy-btn" id="copyBtn">📋 一鍵複製完整資訊貼給ChatGPT幫你分析有多划算</button>
         </div>
 
@@ -209,8 +240,12 @@
 • 加入會員（LINE官方帳號）：https://lin.ee/eefIbqz
 
 ✨ 品牌特色
-• 全台唯一霜淇淋保冰30分鐘外送,辦公室下午茶也可以吃到低卡且保冰完整的霜淇淋
+（品牌精神）
+• 使用台灣茶葉 品質穩定
 • 使用光泉5.1濃豆漿製作豆乳產品
+
+（服務特色）
+• 全台唯一霜淇淋保冰30分鐘外送,辦公室下午茶也可以吃到低卡且保冰完整的霜淇淋
 • 註：品牌名稱與「木曜4超玩」節目無關聯
 
 🍦 特色配料
@@ -306,7 +341,7 @@
 📱 點選下方按鈕立即加入會員領好禮
 領取價值超過100元入會禮！`;
 
-        // 在頁面載入時顯示預覽
+        // 顯示預覽
         document.getElementById('contentPreview').textContent = contentText;
 
         // 複製功能
