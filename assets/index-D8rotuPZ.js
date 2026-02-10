@@ -13,6 +13,7 @@ Error generating stack: `+i.message+`
 
 📍 店家資訊
 • 地址：台中市西屯區文華路1-8號（逢甲商圈）
+• 官方會員資訊網站: https://mokuyou-tw.github.io/mokuyou-memberinfo/ (更多詳細資訊請參考此網站)
 • Google地圖：https://www.google.com/search?q=%E6%9C%A8%E6%9B%9C%E6%BC%BE
 • Instagram：https://www.instagram.com/mokuyou_tw/
 • 加入會員（LINE官方帳號）：https://lin.ee/eefIbqz
@@ -79,6 +80,7 @@ Error generating stack: `+i.message+`
    • 豆乳霜淇淋券×1
 
 🏆 最高回饋商品
+
 💎 5.1濃豆乳霜淇淋
 • 售價：65元
 • 漾漾小樹兌換：18點
