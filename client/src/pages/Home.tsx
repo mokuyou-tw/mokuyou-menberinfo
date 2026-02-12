@@ -767,12 +767,7 @@ export default function Home() {
                         )}
                       </CardContent>
                     </Card>
-                  ))}
-                </div>
-              {/* 菜單部分 */}
-              <Menu />
-              </div>
-            </motion.div>
+                  ))}\n                </div>\n              </div>\n\n              {/* 菜單部分 */}\n              <div>\n                <Menu />\n              </div>         </motion.div>
           </TabsContent>
         </Tabs>
       </section>
