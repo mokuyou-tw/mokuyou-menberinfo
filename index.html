@@ -234,8 +234,13 @@ Error generating stack: `+l.message+`
 
   window.addEventListener('DOMContentLoaded', () => {
     scheduleTry();
-    obs.observe(document.body, { childList: true, subtree: true });
-  });
+    // Re-check when user switches tabs/scrolls. React often toggles visibility via attributes.
+    window.addEventListener('click', scheduleTry, true);
+    window.addEventListener('scroll', scheduleTry, { passive: true });
+    window.addEventListener('pageshow', scheduleTry);
+    window.addEventListener('hashchange', scheduleTry);
+    obs.observe(document.body, { childList: true, subtree: true, attributes: true, characterData: true });
+});
 })();
 </script>
 </body>
