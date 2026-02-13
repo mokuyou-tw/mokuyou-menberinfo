@@ -254,6 +254,93 @@ Error generating stack: `+l.message+`
 
 })();
 </script>
+
+
+<script>
+/* mokuyou-wordmark-replace */
+(() => {
+  const WORDMARK_SRC = './icons/mokuyou-wordmark.png?v=2';
+  const matchText = (s) => {
+    const t = (s || '').replace(/\s+/g,'').toLowerCase();
+    return t.includes('木曜漾') && t.includes('mokuyou');
+  };
+
+  const findTargetEl = () => {
+    const root = document.getElementById('root') || document.body;
+    const candidates = Array.from(root.querySelectorAll('h1, h2, div, span'));
+    for (const el of candidates) {
+      const txt = (el.textContent || '').trim();
+      if (txt && txt.length <= 30 && matchText(txt)) return el;
+    }
+    try {
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+      let node;
+      while ((node = walker.nextNode())) {
+        const txt = (node.nodeValue || '').trim();
+        if (txt && txt.length <= 30 && matchText(txt)) {
+          return node.parentElement;
+        }
+      }
+    } catch (_) {}
+    return null;
+  };
+
+  const apply = () => {
+    const el = findTargetEl();
+    if (!el) return false;
+    if (el.querySelector && el.querySelector('img[data-mokuyou-wordmark="1"]')) return true;
+
+    el.textContent = '';
+
+    const img = document.createElement('img');
+    img.src = WORDMARK_SRC;
+    img.alt = '木曜漾 mokuyou';
+    img.setAttribute('data-mokuyou-wordmark','1');
+
+    // Keep layout stable: control by HEIGHT (not width) to avoid oversized logo.
+    img.style.display = 'block';
+    img.style.margin = '0 auto';
+    img.style.height = 'clamp(64px, 10vw, 120px)';
+    img.style.width = 'auto';
+    img.style.maxWidth = '90%';
+    img.style.objectFit = 'contain';
+
+    el.appendChild(img);
+    return true;
+  };
+
+  let tries = 0;
+  const tick = () => {
+    tries++;
+    if (apply() || tries > 80) return;
+    setTimeout(tick, 150);
+  };
+  tick();
+})();
+</script>
+
+
+<script>
+/* mokuyou-icon-cachebust */
+(() => {
+  const V = '2';
+  const tick = () => {
+    const imgs = Array.from(document.querySelectorAll('img'));
+    let touched = false;
+    for (const img of imgs) {
+      const src = img.getAttribute('src') || '';
+      if (src.includes('icons/soybean.png') && !src.includes('v=')) {
+        img.src = src.split('?')[0] + '?v=' + V;
+        touched = true;
+      }
+    }
+    // run a few times because the page is SPA
+    if (!touched) setTimeout(tick, 300);
+  };
+  tick();
+})();
+</script>
+
 </body>
 
 </html>
