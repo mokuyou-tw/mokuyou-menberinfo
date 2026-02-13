@@ -6,12 +6,21 @@
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1" />
-    <title>木曜漾品牌完整調查報告</title>    
+    <title>木曜漾 mokuyou - 台灣手搖飲/低卡義式霜淇淋專賣官方資訊網</title>
+    <meta property="og:title" content="木曜漾 mokuyou - 台灣手搖飲/低卡義式霜淇淋專賣官方資訊網" />
+    <meta property="og:description" content="完整品牌與會員資訊。使用台灣茶葉、光泉5.1特濃豆漿、全台唯一霜淇淋保冰30分鐘外送。加入會員享受點數累積、折扣券、生日禮等優惠。" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://mokuyou-tw.github.io/mokuyou-memberinfo/" />
+    <meta property="og:image" content="https://mokuyou-tw.github.io/mokuyou-memberinfo/assets/mokuyou-hero.png" />
+    <meta name="description" content="木曜漾 mokuyou 官方會員資訊網站。完整品牌介紹、會員制度、點數累積規則、折扣券方案、會員贈禮等資訊。" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="木曜漾 mokuyou - 台灣手搖飲/低卡義式霜淇淋專賣官方資訊網" />
+    <meta name="twitter:description" content="完整品牌與會員資訊。使用台灣茶葉、光泉5.1特濃豆漿、全台唯一霜淇淋保冰30分鐘外送。" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet" />
-    <script type="module" crossorigin src="/mokuyou-memberinfo/assets/index-PmtvLKeM.js"></script>
-    <link rel="stylesheet" crossorigin href="/mokuyou-memberinfo/assets/index-B34jA39o.css">
+    <script type="module" crossorigin src="/mokuyou-memberinfo/assets/index-D8rotuPZ.js"></script>
+    <link rel="stylesheet" crossorigin href="/mokuyou-memberinfo/assets/index-CcsiOkeb.css">
   </head>
 
   <body>
@@ -78,8 +87,157 @@ Error generating stack: `+l.message+`
     <div id="root"></div>
     <script
       defer
-      src="https://manus-analytics.com/umami"
-      data-website-id="0bbb4c2e-8ba1-4679-a859-55e830878a92"></script>
-  </body>
+      src="%VITE_ANALYTICS_ENDPOINT%/umami"
+      data-website-id="%VITE_ANALYTICS_WEBSITE_ID%"></script>
+  <script>
+(() => {
+  // PDF file path (GitHub Pages relative)
+  const PDF_HREF = './docs/menu.pdf';
+  const EMBED_ID = 'mokuyou-pdf-embed';
+
+  // Anchor texts (MENU item & shared footer)
+  const CARD_TITLES = ['5.1濃豆乳奶蓋烏龍', '5.1特濃豆乳奶蓋烏龍'];
+  const FOOTER_ANCHOR_TEXT = '霜淇淋愛好者';
+
+  const isVisible = (el) => {
+    if (!el) return false;
+    const style = window.getComputedStyle(el);
+    if (!style) return false;
+    if (style.display === 'none' || style.visibility === 'hidden') return false;
+    if (el.offsetParent === null && style.position !== 'fixed') return false;
+    const rects = el.getClientRects();
+    if (!rects || rects.length === 0) return false;
+    const r = el.getBoundingClientRect();
+    if (r.width <= 0 || r.height <= 0) return false;
+    return true;
+  };
+
+  const findFirstElementContainingIn = (root, needle) => {
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
+    let node;
+    while ((node = walker.nextNode())) {
+      const t = (node.textContent || '').trim();
+      if (!t) continue;
+      if (t.includes(needle)) return node;
+    }
+    return null;
+  };
+
+  const findCardRoot = () => {
+    let titleEl = null;
+    for (const t of CARD_TITLES) {
+      titleEl = findFirstElementContainingIn(document.body, t);
+      if (titleEl) break;
+    }
+    if (!titleEl) return null;
+
+    let cur = titleEl;
+    for (let i = 0; i < 22 && cur; i++) {
+      const txt = cur.textContent || '';
+      const hasPrice = txt.includes('$75');
+      const hasPoints = txt.includes('25點');
+      const hasImg = !!cur.querySelector('img');
+      if (hasPrice && hasPoints && hasImg) return cur;
+      cur = cur.parentElement;
+    }
+    return titleEl.closest('div') || titleEl.parentElement;
+  };
+
+  const findVisibleFooterAfterCard = (cardRoot) => {
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_ELEMENT);
+    let node;
+    while ((node = walker.nextNode())) {
+      const txt = (node.textContent || '').trim();
+      if (!txt) continue;
+      if (!txt.includes(FOOTER_ANCHOR_TEXT)) continue;
+      if (!isVisible(node)) continue;
+
+      const pos = cardRoot.compareDocumentPosition(node);
+      const isFollowing = !!(pos & Node.DOCUMENT_POSITION_FOLLOWING);
+      if (isFollowing) return node;
+    }
+    return null;
+  };
+
+  const buildEmbed = () => {
+    const wrap = document.createElement('div');
+    wrap.id = EMBED_ID;
+
+    const iframe = document.createElement('iframe');
+    iframe.src = PDF_HREF + '#view=FitH';
+    iframe.loading = 'lazy';
+    iframe.style.width = '100%';
+    iframe.style.height = '3400px';
+    iframe.style.border = '0';
+
+    wrap.appendChild(iframe);
+
+    // One-line fallback link (NOT a button) for iOS/Safari PDF embed incompatibility.
+    const fallback = document.createElement('div');
+    fallback.style.textAlign = 'center';
+    fallback.style.margin = '8px 0 0';
+
+    const link = document.createElement('a');
+    link.href = PDF_HREF;
+    link.target = '_blank';
+    link.rel = 'noopener';
+    link.textContent = '若無法預覽請點此開啟 PDF';
+    link.style.font = 'inherit';
+    link.style.color = 'inherit';
+    link.style.textDecoration = 'underline';
+
+    fallback.appendChild(link);
+    wrap.appendChild(fallback);
+
+    return wrap;
+  };
+
+  const ensureEmbed = () => {
+    const cardRoot = findCardRoot();
+    const existing = document.getElementById(EMBED_ID);
+
+    // Only show/insert when the MENU card is actually visible (prevents appearing at page top)
+    if (!cardRoot || !isVisible(cardRoot)) {
+      if (existing) existing.style.display = 'none';
+      return;
+    }
+
+    if (existing) {
+      existing.style.display = '';
+      return;
+    }
+
+    const footer = findVisibleFooterAfterCard(cardRoot);
+    const embed = buildEmbed();
+
+    if (footer && footer.parentNode) {
+      footer.parentNode.insertBefore(embed, footer);
+      return;
+    }
+
+    if (cardRoot.parentNode) {
+      cardRoot.parentNode.insertBefore(embed, cardRoot.nextSibling);
+    }
+  };
+
+  let scheduled = false;
+  const scheduleTry = () => {
+    if (scheduled) return;
+    scheduled = true;
+    setTimeout(() => {
+      scheduled = false;
+      ensureEmbed();
+    }, 200);
+  };
+
+  const obs = new MutationObserver(scheduleTry);
+
+  window.addEventListener('DOMContentLoaded', () => {
+    scheduleTry();
+    obs.observe(document.body, { childList: true, subtree: true });
+  });
+})();
+</script>
+</body>
 
 </html>
