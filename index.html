@@ -21,6 +21,26 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet" />
     <script type="module" crossorigin src="/mokuyou-memberinfo/assets/index-D8rotuPZ.js"></script>
     <link rel="stylesheet" crossorigin href="/mokuyou-memberinfo/assets/index-CcsiOkeb.css">
+  <style>
+  /* 只針對頁尾那顆「黃豆/豆漿包裝」圖，不影響其他圖片 */
+ img[src*="/icons/soybean.png"],
+img[src*="./icons/soybean.png"],
+img[src*="icons/soybean.png"]{
+  width:44px !important;
+  height:44px !important;
+  object-fit:contain;
+  flex:0 0 auto;
+}
+@media (min-width:768px){
+  img[src*="/icons/soybean.png"],
+  img[src*="./icons/soybean.png"],
+  img[src*="icons/soybean.png"]{
+    width:52px !important;
+    height:52px !important;
+  }
+}
+</style>
+
   </head>
 
   <body>
