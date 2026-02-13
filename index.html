@@ -91,70 +91,62 @@ Error generating stack: `+l.message+`
       data-website-id="%VITE_ANALYTICS_WEBSITE_ID%"></script>
   <script>
 (() => {
-  // PDF file path (GitHub Pages relative)
+  const EMBED_ID = 'mokuyou-menu-pdf';
+  const MENU_TAB_LABEL = 'MENU';
+  const FOOTER_NEEDLE = '霜淇淋愛好者';
+  const IMG_HREF = './docs/menu.png';
   const PDF_HREF = './docs/menu.pdf';
-  const EMBED_ID = 'mokuyou-pdf-embed';
-
-  // Anchor texts (MENU item & shared footer)
-  const CARD_TITLES = ['5.1濃豆乳奶蓋烏龍', '5.1特濃豆乳奶蓋烏龍'];
-  const FOOTER_ANCHOR_TEXT = '霜淇淋愛好者';
 
   const isVisible = (el) => {
     if (!el) return false;
     const style = window.getComputedStyle(el);
-    if (!style) return false;
-    if (style.display === 'none' || style.visibility === 'hidden') return false;
-    if (el.offsetParent === null && style.position !== 'fixed') return false;
-    const rects = el.getClientRects();
-    if (!rects || rects.length === 0) return false;
-    const r = el.getBoundingClientRect();
-    if (r.width <= 0 || r.height <= 0) return false;
-    return true;
+    if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') return false;
+    const rect = el.getBoundingClientRect();
+    return rect.width > 0 && rect.height > 0;
   };
 
-  const findFirstElementContainingIn = (root, needle) => {
-    const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
-    let node;
-    while ((node = walker.nextNode())) {
-      const t = (node.textContent || '').trim();
-      if (!t) continue;
-      if (t.includes(needle)) return node;
-    }
-    return null;
+  const getActivePanel = () => {
+    // Radix Tabs pattern: role="tabpanel" + data-state="active" (or hidden removed)
+    return (
+      document.querySelector('[role="tabpanel"][data-state="active"]') ||
+      document.querySelector('[role="tabpanel"]:not([hidden])')
+    );
   };
 
-  const findCardRoot = () => {
-    let titleEl = null;
-    for (const t of CARD_TITLES) {
-      titleEl = findFirstElementContainingIn(document.body, t);
-      if (titleEl) break;
-    }
-    if (!titleEl) return null;
+  const panelIsMenu = (panel) => {
+    if (!panel) return false;
+    const tabId = panel.getAttribute('aria-labelledby');
+    if (!tabId) return false;
+    const tab = document.getElementById(tabId);
+    if (!tab) return false;
+    const t = (tab.textContent || '').replace(/\s+/g, '').toUpperCase();
+    return t.includes(MENU_TAB_LABEL);
+  };
 
-    let cur = titleEl;
-    for (let i = 0; i < 22 && cur; i++) {
-      const txt = cur.textContent || '';
-      const hasPrice = txt.includes('$75');
-      const hasPoints = txt.includes('25點');
-      const hasImg = !!cur.querySelector('img');
-      if (hasPrice && hasPoints && hasImg) return cur;
+  const findTextNode = (root, needle) => {
+    try {
+      const walker = document.createTreeWalker(
+        root,
+        NodeFilter.SHOW_TEXT,
+        {
+          acceptNode: (n) =>
+            (n && n.nodeValue && n.nodeValue.includes(needle))
+              ? NodeFilter.FILTER_ACCEPT
+              : NodeFilter.FILTER_SKIP
+        }
+      );
+      return walker.nextNode();
+    } catch (_) {
+      return null;
+    }
+  };
+
+  const closestChildOf = (el, root) => {
+    if (!el) return null;
+    let cur = el;
+    for (let i = 0; i < 50 && cur; i++) {
+      if (cur.parentElement === root) return cur;
       cur = cur.parentElement;
-    }
-    return titleEl.closest('div') || titleEl.parentElement;
-  };
-
-  const findVisibleFooterAfterCard = (cardRoot) => {
-    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_ELEMENT);
-    let node;
-    while ((node = walker.nextNode())) {
-      const txt = (node.textContent || '').trim();
-      if (!txt) continue;
-      if (!txt.includes(FOOTER_ANCHOR_TEXT)) continue;
-      if (!isVisible(node)) continue;
-
-      const pos = cardRoot.compareDocumentPosition(node);
-      const isFollowing = !!(pos & Node.DOCUMENT_POSITION_FOLLOWING);
-      if (isFollowing) return node;
     }
     return null;
   };
@@ -162,85 +154,104 @@ Error generating stack: `+l.message+`
   const buildEmbed = () => {
     const wrap = document.createElement('div');
     wrap.id = EMBED_ID;
+    wrap.style.margin = '0';
+    wrap.style.padding = '0';
 
-    const iframe = document.createElement('iframe');
-    iframe.src = PDF_HREF + '#view=FitH';
-    iframe.loading = 'lazy';
-    iframe.style.width = '100%';
-    iframe.style.height = '3400px';
-    iframe.style.border = '0';
+    const img = document.createElement('img');
+    img.src = IMG_HREF;
+    img.alt = 'MENU（PDF轉圖）';
+    img.loading = 'lazy';
+    img.style.display = 'block';
+    img.style.width = '100%';
+    img.style.height = 'auto';
 
-    wrap.appendChild(iframe);
-
-    // One-line fallback link (NOT a button) for iOS/Safari PDF embed incompatibility.
     const fallback = document.createElement('div');
     fallback.style.textAlign = 'center';
-    fallback.style.margin = '8px 0 0';
+    fallback.style.marginTop = '8px';
+    fallback.style.fontSize = '12px';
+    fallback.style.opacity = '0.85';
 
-    const link = document.createElement('a');
-    link.href = PDF_HREF;
-    link.target = '_blank';
-    link.rel = 'noopener';
-    link.textContent = '若無法預覽請點此開啟 PDF';
-    link.style.font = 'inherit';
-    link.style.color = 'inherit';
-    link.style.textDecoration = 'underline';
+    const a = document.createElement('a');
+    a.href = PDF_HREF;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    a.textContent = '若無法顯示，請點此開啟 PDF';
 
-    fallback.appendChild(link);
+    fallback.appendChild(a);
+
+    wrap.appendChild(img);
     wrap.appendChild(fallback);
-
     return wrap;
   };
 
+  const removeIfOrphan = (el) => {
+    if (!el) return;
+    if (!el.parentNode) return;
+    // keep; do nothing
+  };
+
+  let pending = false;
+  const scheduleTry = () => {
+    if (pending) return;
+    pending = true;
+    window.setTimeout(() => {
+      pending = false;
+      ensureEmbed();
+    }, 120);
+  };
+
   const ensureEmbed = () => {
-    const cardRoot = findCardRoot();
     const existing = document.getElementById(EMBED_ID);
 
-    // Only show/insert when the MENU card is actually visible (prevents appearing at page top)
-    if (!cardRoot || !isVisible(cardRoot)) {
-      if (existing) existing.style.display = 'none';
+    const panel = getActivePanel();
+    if (!panel || !panelIsMenu(panel) || !isVisible(panel)) {
+      if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
       return;
     }
 
-    if (existing) {
-      existing.style.display = '';
-      return;
-    }
+    // Already inserted and still inside the active MENU panel
+    if (existing && panel.contains(existing)) return;
 
-    const footer = findVisibleFooterAfterCard(cardRoot);
+    if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
+
+    const footerText = findTextNode(panel, FOOTER_NEEDLE);
+    const footerBlock = footerText ? closestChildOf(footerText.parentElement, panel) : null;
+
     const embed = buildEmbed();
 
-    if (footer && footer.parentNode) {
-      footer.parentNode.insertBefore(embed, footer);
-      return;
-    }
-
-    if (cardRoot.parentNode) {
-      cardRoot.parentNode.insertBefore(embed, cardRoot.nextSibling);
+    if (footerBlock && footerBlock.parentNode) {
+      footerBlock.parentNode.insertBefore(embed, footerBlock);
+    } else {
+      panel.appendChild(embed);
     }
   };
 
-  let scheduled = false;
-  const scheduleTry = () => {
-    if (scheduled) return;
-    scheduled = true;
-    setTimeout(() => {
-      scheduled = false;
-      ensureEmbed();
-    }, 200);
-  };
-
-  const obs = new MutationObserver(scheduleTry);
-
-  window.addEventListener('DOMContentLoaded', () => {
+  // Initial attempts
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', scheduleTry);
+  } else {
     scheduleTry();
-    // Re-check when user switches tabs/scrolls. React often toggles visibility via attributes.
-    window.addEventListener('click', scheduleTry, true);
-    window.addEventListener('scroll', scheduleTry, { passive: true });
-    window.addEventListener('pageshow', scheduleTry);
-    window.addEventListener('hashchange', scheduleTry);
-    obs.observe(document.body, { childList: true, subtree: true, attributes: true, characterData: true });
-});
+  }
+
+  // Watch for Radix Tabs state changes (attribute flips) + initial render
+  const obs = new MutationObserver(() => scheduleTry());
+  try {
+    obs.observe(document.body, {
+      subtree: true,
+      childList: true,
+      attributes: true,
+      attributeFilter: ['data-state', 'hidden', 'aria-selected', 'class', 'style']
+    });
+  } catch (_) {}
+
+  // Extra: if some handlers stop propagation, capture phase still sees it
+  window.addEventListener('click', scheduleTry, true);
+  window.addEventListener('hashchange', scheduleTry);
+  window.addEventListener('popstate', scheduleTry);
+
+  // Keep it responsive on orientation change
+  window.addEventListener('resize', scheduleTry);
+
 })();
 </script>
 </body>
