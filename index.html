@@ -115,14 +115,8 @@ Error generating stack: `+l.message+`
   const MENU_TAB_LABEL = 'MENU';
   const FOOTER_NEEDLE = '霜淇淋愛好者';
   // Use a versioned query to reduce caching issues on GitHub Pages.
-  const MOBILE_IMG_HREF = "./docs/menu.png?v=10";
-  const DESKTOP_IMG_HREFS = [
-    "./docs/menu_desktop_16x9_p1.png?v=10",
-    "./docs/menu_desktop_16x9_p2.png?v=10",
-    "./docs/menu_desktop_16x9_p3.png?v=10",
-    "./docs/menu_desktop_16x9_p4.png?v=10",
-    "./docs/menu_desktop_16x9_p5.png?v=10"
-  ];
+  const MOBILE_IMG_HREF = "./docs/menu.png?v=12";
+  const DESKTOP_IMG_HREFS = ["./docs/menu_desktop_16x9_full.png?v=12"];
   const isDesktop = () => window.matchMedia("(min-width: 900px)").matches;
   const PDF_HREF = './docs/menu.pdf';
 
@@ -190,27 +184,18 @@ Error generating stack: `+l.message+`
       while (wrap.firstChild) wrap.removeChild(wrap.firstChild);
 
       if (isDesktop()) {
-        const stack = document.createElement('div');
-        stack.style.display = 'flex';
-        stack.style.flexDirection = 'column';
-        stack.style.gap = '16px';
-        stack.style.alignItems = 'center';
-        stack.style.width = '100%';
-
-        DESKTOP_IMG_HREFS.forEach((src, i) => {
-          const im = document.createElement('img');
-          im.src = src;
-          im.alt = `木曜漾完整菜單（第${i + 1}頁）`;
-          im.loading = 'lazy';
-          im.style.display = 'block';
-          im.style.width = '100%';
-          im.style.height = 'auto';
-          im.style.borderRadius = '18px';
-          im.style.boxShadow = '0 10px 30px rgba(0,0,0,.12)';
-          stack.appendChild(im);
-        });
-
-        wrap.appendChild(stack);
+        const im = document.createElement('img');
+        im.src = DESKTOP_IMG_HREFS[0];
+        im.alt = '木曜漾完整菜單（桌機版）';
+        im.loading = 'lazy';
+        im.style.display = 'block';
+        im.style.width = '100%';
+        im.style.maxWidth = '1400px';
+        im.style.height = 'auto';
+        im.style.margin = '0 auto';
+        im.style.borderRadius = '18px';
+        im.style.boxShadow = '0 10px 30px rgba(0,0,0,.12)';
+        wrap.appendChild(im);
       } else {
         const im = document.createElement('img');
         im.src = MOBILE_IMG_HREF;
@@ -289,42 +274,36 @@ const fallback = document.createElement('div');
     _scrollFixSnapshots.forEach(s => {
       try {
         s.el.style.overflowY = s.overflowY;
-        s.el.style.overflowX = s.overflowX;
         s.el.style.maxHeight = s.maxHeight;
         s.el.style.height = s.height;
-      } catch (e) {}
+      } catch (_) {}
     });
     _scrollFixSnapshots = [];
   };
   const applyScrollFix = (startEl) => {
     restoreScrollFix();
-    try {
-      const snapshots = [];
-      let cur = startEl;
-      while (cur && cur !== document.body) {
-        const cs = window.getComputedStyle(cur);
-        const oy = cs.overflowY;
-        const ox = cs.overflowX;
-        const o = cs.overflow;
-        const isScrollY = (oy === 'auto' || oy === 'scroll' || o === 'auto' || o === 'scroll');
-        const isScrollX = (ox === 'auto' || ox === 'scroll' || o === 'auto' || o === 'scroll');
-        if (isScrollY || isScrollX) {
-          snapshots.push({
-            el: cur,
-            overflowY: cur.style.overflowY,
-            overflowX: cur.style.overflowX,
-            maxHeight: cur.style.maxHeight,
-            height: cur.style.height
-          });
-          if (isScrollY) cur.style.overflowY = 'visible';
-          if (isScrollX) cur.style.overflowX = 'visible';
-          cur.style.maxHeight = 'none';
-          cur.style.height = 'auto';
-        }
-        cur = cur.parentElement;
+    const snapshots = [];
+    let cur = startEl;
+    let guard = 0;
+    while (cur && cur !== document.body && guard < 12) {
+      guard++;
+      const cs = window.getComputedStyle(cur);
+      const oy = cs.overflowY;
+      const isScroll = (oy === 'auto' || oy === 'scroll');
+      if (isScroll) {
+        snapshots.push({
+          el: cur,
+          overflowY: cur.style.overflowY,
+          maxHeight: cur.style.maxHeight,
+          height: cur.style.height,
+        });
+        cur.style.overflowY = 'visible';
+        cur.style.maxHeight = 'none';
+        cur.style.height = 'auto';
       }
-      _scrollFixSnapshots = snapshots;
-    } catch (e) {}
+      cur = cur.parentElement;
+    }
+    _scrollFixSnapshots = snapshots;
   };
 
   const ensureEmbed = () => {
