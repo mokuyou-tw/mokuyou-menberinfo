@@ -115,7 +115,15 @@ Error generating stack: `+l.message+`
   const MENU_TAB_LABEL = 'MENU';
   const FOOTER_NEEDLE = '霜淇淋愛好者';
   // Use a versioned query to reduce caching issues on GitHub Pages.
-  const IMG_HREF = './docs/menu.png?v=9';
+  const MOBILE_IMG_HREF = "./docs/menu.png?v=10";
+  const DESKTOP_IMG_HREFS = [
+    "./docs/menu_desktop_16x9_p1.png?v=10",
+    "./docs/menu_desktop_16x9_p2.png?v=10",
+    "./docs/menu_desktop_16x9_p3.png?v=10",
+    "./docs/menu_desktop_16x9_p4.png?v=10",
+    "./docs/menu_desktop_16x9_p5.png?v=10"
+  ];
+  const isDesktop = () => window.matchMedia("(min-width: 900px)").matches;
   const PDF_HREF = './docs/menu.pdf';
 
   const isVisible = (el) => {
@@ -177,16 +185,51 @@ Error generating stack: `+l.message+`
     wrap.id = EMBED_ID;
     wrap.style.margin = '0';
     wrap.style.padding = '0';
+    const renderMenu = () => {
+      // Clear previous (in case of re-run)
+      while (wrap.firstChild) wrap.removeChild(wrap.firstChild);
 
-    const img = document.createElement('img');
-    img.src = IMG_HREF;
-    img.alt = 'MENU（PDF轉圖）';
-    img.loading = 'lazy';
-    img.style.display = 'block';
-    img.style.width = '100%';
-    img.style.height = 'auto';
+      if (isDesktop()) {
+        const car = document.createElement('div');
+        car.style.display = 'flex';
+        car.style.gap = '16px';
+        car.style.overflowX = 'auto';
+        car.style.scrollSnapType = 'x mandatory';
+        car.style.padding = '6px 0 2px';
+        car.style.WebkitOverflowScrolling = 'touch';
 
-    const fallback = document.createElement('div');
+        DESKTOP_IMG_HREFS.forEach((src) => {
+          const im = document.createElement('img');
+          im.src = src;
+          im.alt = '木曜漾完整菜單（桌機版）';
+          im.loading = 'lazy';
+          im.style.flex = '0 0 auto';
+          im.style.width = 'min(92vw, 1200px)';
+          im.style.height = 'auto';
+          im.style.display = 'block';
+          im.style.borderRadius = '18px';
+          im.style.boxShadow = '0 10px 30px rgba(0,0,0,.12)';
+          im.style.scrollSnapAlign = 'center';
+          car.appendChild(im);
+        });
+
+        wrap.appendChild(car);
+      } else {
+        const im = document.createElement('img');
+        im.src = MOBILE_IMG_HREF;
+        im.alt = '木曜漾完整菜單';
+        im.loading = 'lazy';
+        im.style.display = 'block';
+        im.style.width = '100%';
+        im.style.height = 'auto';
+        im.style.borderRadius = '18px';
+        im.style.boxShadow = '0 10px 30px rgba(0,0,0,.12)';
+        wrap.appendChild(im);
+      }
+    };
+
+    renderMenu();
+const fallback = document.createElement('div');
     fallback.style.textAlign = 'center';
     fallback.style.marginTop = '8px';
     fallback.style.fontSize = '12px';
@@ -198,7 +241,7 @@ Error generating stack: `+l.message+`
     fallback.appendChild(label);
 
     const linkImg = document.createElement('a');
-    linkImg.href = IMG_HREF;
+    linkImg.href = isDesktop() ? DESKTOP_IMG_HREFS[0] : MOBILE_IMG_HREF;
     linkImg.target = '_blank';
     linkImg.rel = 'noopener noreferrer';
     linkImg.textContent = '菜單圖片';
@@ -220,8 +263,6 @@ Error generating stack: `+l.message+`
     linkPdf.style.textDecoration = 'underline';
     linkPdf.style.color = '#2d7a3e';
     fallback.appendChild(linkPdf);
-
-    wrap.appendChild(img);
     wrap.appendChild(fallback);
     return wrap;
   };
