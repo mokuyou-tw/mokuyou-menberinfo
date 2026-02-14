@@ -172,35 +172,82 @@ Error generating stack: `+l.message+`
   };
 
   const buildEmbed = () => {
-    const wrap = document.createElement('div');
+    const wrap = document.createElement("div");
     wrap.id = EMBED_ID;
-    wrap.style.margin = '0';
-    wrap.style.padding = '0';
+    wrap.style.display = "block";
+    wrap.style.width = "100%";
+    wrap.style.margin = "16px auto 0";
+    wrap.style.padding = "0";
 
-    const img = document.createElement('img');
-    img.src = IMG_HREF;
-    img.alt = 'MENU（PDF轉圖）';
-    img.loading = 'lazy';
-    img.style.display = 'block';
-    img.style.width = '100%';
-    img.style.height = 'auto';
+    // PDF 版面比例（依目前一頁式 menu.pdf：390 × 3013）
+    const PDF_W = 390;
+    const PDF_H = 3013;
+    const RATIO = PDF_H / PDF_W; // height = width * RATIO
 
-    const fallback = document.createElement('div');
-    fallback.style.textAlign = 'center';
-    fallback.style.marginTop = '8px';
-    fallback.style.fontSize = '12px';
-    fallback.style.opacity = '0.85';
+    const frame = document.createElement("div");
+    frame.style.width = "100%";
+    frame.style.maxWidth = "880px";
+    frame.style.margin = "0 auto";
+    frame.style.borderRadius = "12px";
+    frame.style.overflow = "hidden";
+    frame.style.background = "#fff";
+    frame.style.boxShadow = "0 10px 30px rgba(0,0,0,.08)";
+    frame.style.position = "relative";
 
-    const a = document.createElement('a');
-    a.href = PDF_HREF;
-    a.target = '_blank';
-    a.rel = 'noopener noreferrer';
-    a.textContent = '若無法顯示，請點此開啟 PDF';
+    // 讓使用者用「網頁本身」滾動看完整一頁式菜單：把容器高度做成「整張 PDF」高度
+    const syncHeight = () => {
+      const w = frame.getBoundingClientRect().width || 0;
+      if (!w) return;
+      frame.style.height = Math.max(600, Math.round(w * RATIO)) + "px";
+    };
 
-    fallback.appendChild(a);
+    // iOS/Safari 對嵌入 PDF 的支援不穩定（常見：空白/強制跳出閱讀器），iOS 直接用 PNG 呈現，避免顧客看不到
+    const isIOS = /iP(ad|hone|od)/.test(navigator.userAgent);
 
-    wrap.appendChild(img);
-    wrap.appendChild(fallback);
+    if (isIOS) {
+      const img = document.createElement("img");
+      img.src = IMG_HREF;
+      img.alt = "完整菜單（圖片模式）";
+      img.style.width = "100%";
+      img.style.height = "100%";
+      img.style.objectFit = "contain";
+      img.style.display = "block";
+      frame.appendChild(img);
+    } else {
+      const iframe = document.createElement("iframe");
+      iframe.src = PDF_HREF + "#view=FitH&toolbar=0&navpanes=0";
+      iframe.title = "木曜漾｜完整菜單（PDF）";
+      iframe.style.width = "100%";
+      iframe.style.height = "100%";
+      iframe.style.border = "0";
+      iframe.style.display = "block";
+      iframe.setAttribute("loading", "lazy");
+      // 避免部分瀏覽器用 iframe 內部捲動：高度已做滿整張 PDF
+      frame.appendChild(iframe);
+    }
+
+    const fallbackLink = document.createElement("a");
+    fallbackLink.href = "./docs/menu.pdf";
+    fallbackLink.target = "_blank";
+    fallbackLink.rel = "noopener";
+    fallbackLink.textContent = "若無法預覽，請點此開啟 PDF 菜單";
+    fallbackLink.style.display = "block";
+    fallbackLink.style.textAlign = "center";
+    fallbackLink.style.marginTop = "8px";
+    fallbackLink.style.textDecoration = "underline";
+    fallbackLink.style.color = "hsl(160 60% 35%)";
+    fallbackLink.style.fontSize = "14px";
+
+    wrap.appendChild(frame);
+    wrap.appendChild(fallbackLink);
+
+    // init + resize
+    syncHeight();
+    window.addEventListener("resize", () => {
+      // 讓 height 跟著寬度走（手機旋轉 / 視窗縮放）
+      syncHeight();
+    });
+
     return wrap;
   };
 
