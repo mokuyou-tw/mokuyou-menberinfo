@@ -114,7 +114,8 @@ Error generating stack: `+l.message+`
   const EMBED_ID = 'mokuyou-menu-pdf';
   const MENU_TAB_LABEL = 'MENU';
   const FOOTER_NEEDLE = '霜淇淋愛好者';
-  const IMG_HREF = './docs/menu.png';
+  // Use a versioned query to reduce caching issues on GitHub Pages.
+  const IMG_HREF = './docs/menu.png?v=8';
   const PDF_HREF = './docs/menu.pdf';
 
   const isVisible = (el) => {
@@ -172,82 +173,56 @@ Error generating stack: `+l.message+`
   };
 
   const buildEmbed = () => {
-    const wrap = document.createElement("div");
+    const wrap = document.createElement('div');
     wrap.id = EMBED_ID;
-    wrap.style.display = "block";
-    wrap.style.width = "100%";
-    wrap.style.margin = "16px auto 0";
-    wrap.style.padding = "0";
+    wrap.style.margin = '0';
+    wrap.style.padding = '0';
 
-    // PDF 版面比例（依目前一頁式 menu.pdf：390 × 3013）
-    const PDF_W = 390;
-    const PDF_H = 3013;
-    const RATIO = PDF_H / PDF_W; // height = width * RATIO
+    const img = document.createElement('img');
+    img.src = IMG_HREF;
+    img.alt = 'MENU（PDF轉圖）';
+    img.loading = 'lazy';
+    img.style.display = 'block';
+    img.style.width = '100%';
+    img.style.height = 'auto';
 
-    const frame = document.createElement("div");
-    frame.style.width = "100%";
-    frame.style.maxWidth = "880px";
-    frame.style.margin = "0 auto";
-    frame.style.borderRadius = "12px";
-    frame.style.overflow = "hidden";
-    frame.style.background = "#fff";
-    frame.style.boxShadow = "0 10px 30px rgba(0,0,0,.08)";
-    frame.style.position = "relative";
+    const fallback = document.createElement('div');
+    fallback.style.textAlign = 'center';
+    fallback.style.marginTop = '8px';
+    fallback.style.fontSize = '12px';
+    fallback.style.opacity = '0.85';
+    fallback.style.color = '#2d7a3e';
 
-    // 讓使用者用「網頁本身」滾動看完整一頁式菜單：把容器高度做成「整張 PDF」高度
-    const syncHeight = () => {
-      const w = frame.getBoundingClientRect().width || 0;
-      if (!w) return;
-      frame.style.height = Math.max(600, Math.round(w * RATIO)) + "px";
-    };
+    const label = document.createElement('span');
+    label.textContent = '若無法顯示，請點此開啟：';
+    fallback.appendChild(label);
 
-    // iOS/Safari 對嵌入 PDF 的支援不穩定（常見：空白/強制跳出閱讀器），iOS 直接用 PNG 呈現，避免顧客看不到
-    const isIOS = /iP(ad|hone|od)/.test(navigator.userAgent);
+    const linkImg = document.createElement('a');
+    linkImg.href = IMG_HREF;
+    linkImg.target = '_blank';
+    linkImg.rel = 'noopener noreferrer';
+    linkImg.textContent = '菜單圖片';
+    linkImg.style.margin = '0 6px';
+    linkImg.style.textDecoration = 'underline';
+    linkImg.style.color = '#2d7a3e';
+    fallback.appendChild(linkImg);
 
-    if (isIOS) {
-      const img = document.createElement("img");
-      img.src = IMG_HREF;
-      img.alt = "完整菜單（圖片模式）";
-      img.style.width = "100%";
-      img.style.height = "100%";
-      img.style.objectFit = "contain";
-      img.style.display = "block";
-      frame.appendChild(img);
-    } else {
-      const iframe = document.createElement("iframe");
-      iframe.src = PDF_HREF + "#view=FitH&toolbar=0&navpanes=0";
-      iframe.title = "木曜漾｜完整菜單（PDF）";
-      iframe.style.width = "100%";
-      iframe.style.height = "100%";
-      iframe.style.border = "0";
-      iframe.style.display = "block";
-      iframe.setAttribute("loading", "lazy");
-      // 避免部分瀏覽器用 iframe 內部捲動：高度已做滿整張 PDF
-      frame.appendChild(iframe);
-    }
+    const sep = document.createElement('span');
+    sep.textContent = '／';
+    fallback.appendChild(sep);
 
-    const fallbackLink = document.createElement("a");
-    fallbackLink.href = "./docs/menu.pdf";
-    fallbackLink.target = "_blank";
-    fallbackLink.rel = "noopener";
-    fallbackLink.textContent = "若無法預覽，請點此開啟 PDF 菜單";
-    fallbackLink.style.display = "block";
-    fallbackLink.style.textAlign = "center";
-    fallbackLink.style.marginTop = "8px";
-    fallbackLink.style.textDecoration = "underline";
-    fallbackLink.style.color = "hsl(160 60% 35%)";
-    fallbackLink.style.fontSize = "14px";
+    const linkPdf = document.createElement('a');
+    linkPdf.href = PDF_HREF;
+    linkPdf.target = '_blank';
+    linkPdf.rel = 'noopener noreferrer';
+    linkPdf.textContent = 'PDF';
+    linkPdf.style.margin = '0 6px';
+    linkPdf.style.textDecoration = 'underline';
+    linkPdf.style.color = '#2d7a3e';
+    fallback.appendChild(linkPdf);
 
-    wrap.appendChild(frame);
-    wrap.appendChild(fallbackLink);
-
-    // init + resize
-    syncHeight();
-    window.addEventListener("resize", () => {
-      // 讓 height 跟著寬度走（手機旋轉 / 視窗縮放）
-      syncHeight();
-    });
-
+    wrap.appendChild(img);
+    wrap.appendChild(fallback);
     return wrap;
   };
 
@@ -267,14 +242,60 @@ Error generating stack: `+l.message+`
     }, 120);
   };
 
+  // Some panels use a fixed-height + overflow container, which makes the menu appear
+  // in a small inner scrollable viewport ("小視窗"). We want the whole PAGE to scroll.
+  // We apply a reversible inline-style override ONLY while the MENU tab is active.
+  let _scrollFixSnapshots = [];
+  const restoreScrollFix = () => {
+    if (!_scrollFixSnapshots.length) return;
+    _scrollFixSnapshots.forEach(s => {
+      try {
+        s.el.style.overflowY = s.overflowY;
+        s.el.style.maxHeight = s.maxHeight;
+        s.el.style.height = s.height;
+      } catch (_) {}
+    });
+    _scrollFixSnapshots = [];
+  };
+  const applyScrollFix = (startEl) => {
+    restoreScrollFix();
+    const snapshots = [];
+    let cur = startEl;
+    let guard = 0;
+    while (cur && cur !== document.body && guard < 12) {
+      guard++;
+      const cs = window.getComputedStyle(cur);
+      const oy = cs.overflowY;
+      const isScroll = (oy === 'auto' || oy === 'scroll');
+      if (isScroll) {
+        snapshots.push({
+          el: cur,
+          overflowY: cur.style.overflowY,
+          maxHeight: cur.style.maxHeight,
+          height: cur.style.height,
+        });
+        cur.style.overflowY = 'visible';
+        cur.style.maxHeight = 'none';
+        cur.style.height = 'auto';
+      }
+      cur = cur.parentElement;
+    }
+    _scrollFixSnapshots = snapshots;
+  };
+
   const ensureEmbed = () => {
     const existing = document.getElementById(EMBED_ID);
 
     const panel = getActivePanel();
     if (!panel || !panelIsMenu(panel) || !isVisible(panel)) {
+      // Leaving MENU tab (or not ready): restore any scroll overrides.
+      restoreScrollFix();
       if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
       return;
     }
+
+    // MENU tab active: ensure the menu is not trapped in an inner scroll viewport.
+    applyScrollFix(panel);
 
     // Already inserted and still inside the active MENU panel
     if (existing && panel.contains(existing)) return;
